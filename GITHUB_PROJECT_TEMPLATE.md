@@ -1,6 +1,6 @@
-# Gym App - GitHub Project Board & Issues Template
+# RepLog - GitHub Project Board & Issues Template
 
-**Purpose:** This template helps you set up a GitHub Project (Kanban board) and Issues to track Phase 1 development.
+**Purpose:** This template helps you set up a GitHub Project (Kanban board) and Issues to track Phase 1 development of RepLog (AI-powered workout logging app).
 
 **How to use:**
 1. Create a GitHub Project (classic or new table view)
@@ -55,14 +55,14 @@ Milestone 2: Phase 2 (Due: Later)
 
 ---
 
-## Epic 1: Project Setup & Infrastructure
+## Epic 1: RepLog - Project Setup & Infrastructure
 
-**Epic Title:** `[EPIC] Project Setup & Infrastructure`  
+**Epic Title:** `[EPIC] RepLog - Project Setup & Infrastructure`  
 **Label:** `type:epic`, `priority:p0`, `component:frontend`, `component:backend`  
-**Milestone:** MVP Phase 1  
+**Milestone:** RepLog MVP Phase 1  
 
 **Description:**
-Initialize project structure for both frontend and backend. Set up Supabase, environment variables, and CI/CD.
+Initialize RepLog project structure for both frontend and backend. Set up Supabase, environment variables, and CI/CD.
 
 ---
 

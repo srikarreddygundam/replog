@@ -1,9 +1,10 @@
-# Gym App - Product Requirements & System Design Document
+# RepLog - Product Requirements & System Design Document
 
 **Version:** 1.0  
 **Date:** July 2026  
 **Status:** Design Phase - Ready for Development  
-**Team:** Product & Engineering
+**Team:** Product & Engineering  
+**App Name:** RepLog (Workout Logging + AI-Powered Exercise Guidance)
 
 ---
 
@@ -24,11 +25,14 @@
 ## Product Overview
 
 ### Vision
-A **personalized AI-powered gym workout app** that helps users:
+**RepLog** is a personalized AI-powered workout logging app that helps users:
 - Receive intelligent workout recommendations based on fitness level
 - Get real-time AI feedback on exercise selection
-- Log workouts with form guidance
+- Log workouts with proper form guidance
 - Track progress over time with analytics (Phase 2)
+
+### App Description
+**RepLog** = **Rep**etition + **Log** (workout logging with AI smarts)
 
 ### Target User
 Fitness enthusiasts (Beginner to Advanced) who want structured, intelligent workout guidance without hiring a personal trainer.
@@ -46,47 +50,69 @@ Fitness enthusiasts (Beginner to Advanced) who want structured, intelligent work
 **So that** the app can personalize my workout recommendations
 
 **Acceptance Criteria:**
-- [ ] User can enter: Name, Age, Email, Password
+- [ ] User can enter: Name, Age, Email, Password, Height, Weight, Experience Level
 - [ ] User selects fitness level: Beginner or Non-Beginner
+- [ ] User selects experience level: < 6 months, 6-12 months, 1-2 years, 2+ years
+- [ ] Height and Weight used for future personalizations (Phase 2+)
 - [ ] Password must be >= 8 characters
 - [ ] Email must be unique in the system
 - [ ] On success, user is redirected to Home Screen (with date banner)
 - [ ] User auth token is stored securely
-- [ ] Form validation shows clear error messages
+- [ ] Form validation shows clear error messages via toasts
+- [ ] All fields required
 
 **API Needed:** `POST /auth/signup`
 
+**Note:** Height, Weight, Experience Level are captured for future features (target weight goals, AI personalized recommendations)
+
 ---
 
-### US-2: Home Screen with Date Navigation
+### US-2: Home Screen with Date Navigation & Past Workouts
 **As a** logged-in user  
-**I want to** see today's date prominently and navigate to past/future dates  
-**So that** I can select which day to work out for
+**I want to** see today's date prominently, navigate through the week, and see past workouts  
+**So that** I can select which day to work out for and track my progress
 
 **Acceptance Criteria:**
-- [ ] Home screen shows a horizontal date banner (today highlighted in blue)
-- [ ] User can swipe/click left-right to navigate dates
-- [ ] Clicking a date filters the rest of the page to that date
-- [ ] Shows count of exercises planned for selected date
+- [ ] Home screen shows a horizontal date banner spanning 7 days (1 week)
+- [ ] Today is highlighted/centered in the week view
+- [ ] User can swipe/click left-right to navigate to next/previous week
+- [ ] Clicking a date filters the page below to show:
+  - [ ] Exercises logged for that day (if any)
+  - [ ] Muscle groups targeted that day
+  - [ ] Option to start new workout for that day
+- [ ] Shows count of exercises completed for selected date
 - [ ] Date format: "Mon, Jul 30" or similar
-- [ ] Visual distinction between: today, past, future dates
+- [ ] Visual distinction: today (blue), past (gray), future (lighter)
+- [ ] Loading state while fetching past workouts
 
-**Data Needed:** None initially (just UI state)
+**API Needed:** `GET /workouts/:date` (fetch workouts for a specific date)
+
+**Flow Example:**
+1. User lands on Home, sees current week (Jul 28 - Aug 3)
+2. Clicks Jul 30 (past date)
+3. Page shows "3 exercises logged for Jul 30: Chest (Barbell Press, Dumbbell Press, Incline Press)"
+4. Shows "Start New Workout" button if user wants to add more exercises
+5. If user clicks on a future date, just shows "No workouts yet" + "Start New Workout" button
 
 ---
 
 ### US-3: Muscle Group Multi-Select
 **As a** user on home screen  
-**I want to** select 1-2 muscle groups for a workout  
+**I want to** select any number of muscle groups for a workout (from 1 to all 7)  
 **So that** I get exercises tailored to those groups
 
 **Acceptance Criteria:**
 - [ ] Display muscle group buttons: Chest, Back, Shoulders, Biceps, Triceps, Abs, Legs
-- [ ] User can select 1 or 2 muscle groups
+- [ ] User can select 1, 2, 3, or more muscle groups (no limit)
 - [ ] Selected groups are highlighted/checked
-- [ ] "Next" button is enabled only when 1-2 groups are selected
+- [ ] "Next" button is enabled only when at least 1 group is selected
 - [ ] Clicking "Next" takes user to Variations Screen
 - [ ] Visual feedback on selection (checkmark, color change, etc.)
+- [ ] Show count of selected muscle groups: "3 selected"
+
+**Future Enhancement (Phase 2):**
+- [ ] AI recommendation: "Doing a full-body workout (7 muscle groups) in one session is ambitious. Consider splitting into 2-3 focused sessions for better muscle recovery and strength gains."
+- [ ] This will be added after observing user patterns
 
 **API Needed:** None (UI state only for now)
 
@@ -103,6 +129,8 @@ Fitness enthusiasts (Beginner to Advanced) who want structured, intelligent work
 - [ ] Each exercise shows: name, equipment needed, effectiveness rank
 - [ ] User can select/deselect exercises (multi-select, checkboxes)
 - [ ] "Next" button only enabled when at least 1 exercise selected
+- [ ] Loading spinner shown while fetching exercises from backend
+- [ ] Error toast shown if exercise fetch fails
 - [ ] Example: If user selected Shoulders + Triceps:
   - Shoulders: Barbell Press (rank 1), Dumbbell Press (rank 2), Machine Press (rank 3)
   - Triceps: Barbell Dips (rank 1), Tricep Pushdown (rank 2), Overhead Extension (rank 3)
@@ -112,6 +140,12 @@ Fitness enthusiasts (Beginner to Advanced) who want structured, intelligent work
 - Each exercise has: name, muscle_group, effectiveness_rank, equipment_needed
 
 **API Needed:** `GET /exercises?muscle_groups=shoulders,triceps`
+
+**Note on Error Toasts:**
+- Toast = small notification that appears at bottom of screen for 3-5 seconds
+- Used for: success messages ("Workout saved!"), errors ("Failed to load exercises"), info
+- Example: Red toast with error message if API call fails
+- Prevents page navigation/disruption unlike modal dialogs
 
 ---
 
@@ -331,7 +365,10 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
   age INT NOT NULL,
+  height_cm INT, -- Height in centimeters (optional for Phase 1, useful for Phase 2)
+  weight_kg DECIMAL(5, 2), -- Current weight in kg (optional for Phase 1, useful for Phase 2)
   fitness_level VARCHAR(50) NOT NULL, -- 'beginner' or 'non-beginner'
+  experience_level VARCHAR(50) NOT NULL, -- '< 6 months', '6-12 months', '1-2 years', '2+ years'
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -339,6 +376,11 @@ CREATE TABLE users (
 -- Index for auth lookups
 CREATE INDEX idx_users_email ON users(email);
 ```
+
+**Notes:**
+- `height_cm` and `weight_kg` are captured during signup but not required for MVP
+- They enable future features: BMI calculation, calorie recommendations, body composition tracking (Phase 2+)
+- `experience_level` helps AI tailor feedback based on gym experience, not just fitness level
 
 ### Exercises Table
 ```sql
@@ -425,7 +467,10 @@ CREATE POLICY "Users can insert their own workouts"
   "password": "SecurePass123",
   "name": "Sree",
   "age": 28,
-  "fitness_level": "beginner"
+  "height_cm": 180,
+  "weight_kg": 82.5,
+  "fitness_level": "beginner",
+  "experience_level": "1-2 years"
 }
 ```
 
@@ -435,13 +480,18 @@ CREATE POLICY "Users can insert their own workouts"
   "id": "user-uuid-123",
   "email": "sree@example.com",
   "name": "Sree",
+  "age": 28,
+  "height_cm": 180,
+  "weight_kg": 82.5,
   "fitness_level": "beginner",
+  "experience_level": "1-2 years",
   "auth_token": "eyJhbGciOiJIUzI1NiIs..." 
 }
 ```
 
 **Errors:**
-- 400: Invalid email or password format
+- 400: Invalid email, password format, or missing required fields
+- 422: Validation error (e.g., age < 15, height/weight out of range)
 - 409: Email already exists
 
 ---
@@ -732,19 +782,27 @@ CREATE POLICY "Users can insert their own workouts"
 ```
 ┌─────────────────────────┐
 │                         │
-│      GYM APP LOGO       │
+│    REPLOG LOGO/ICON     │
 │                         │
 │  Sign Up                │
 │  ─────────────────────  │
 │                         │
 │  Name: [____________]   │
-│  Age:  [____________]   │
+│  Age:  [__]             │
 │  Email: [____________]  │
 │  Password: [______]     │
+│  Height (cm): [____]    │
+│  Weight (kg): [____]    │
 │                         │
 │  Fitness Level:         │
 │  ○ Beginner             │
 │  ○ Non-Beginner         │
+│                         │
+│  Experience:            │
+│  ○ < 6 months           │
+│  ○ 6-12 months          │
+│  ○ 1-2 years            │
+│  ○ 2+ years             │
 │                         │
 │  [   Sign Up    ]       │
 │                         │
@@ -753,21 +811,27 @@ CREATE POLICY "Users can insert their own workouts"
 └─────────────────────────┘
 ```
 
-### Screen 2: Home Screen (Date + Muscle Group)
+### Screen 2: Home Screen (Date Banner + Past Workouts + Muscle Group)
 ```
 ┌─────────────────────────┐
-│ < Jul 28 | Jul 29 | Jul 30 > │  ← Date Navigation
+│ < Sun | Mon | Tue | Wed > │  ← 1-week date banner
+│       Jul  28  29   30     │     (today highlighted)
 │                         │
-│  Today                  │
-│  July 30, 2026          │
+│ Past Workout (Jul 30):  │
+│ ───────────────────    │
+│ ✓ 3 exercises logged    │
+│   - Chest: 3 exercises  │
+│   - Triceps: 1 exercise │
 │                         │
-│  Select Muscle Groups   │
+│ ─────────────────────   │
+│ Select Muscle Groups    │
+│ (Any number, no limit)  │
 │                         │
 │  [Chest] [Back]         │
 │  [Shoulders] [Biceps]   │
 │  [Triceps] [Abs] [Legs] │
 │                         │
-│  (User selects 2)       │
+│  (3 selected)           │
 │                         │
 │         [ Next ]        │
 └─────────────────────────┘
@@ -871,31 +935,44 @@ CREATE POLICY "Users can insert their own workouts"
 
 ---
 
-## MVP Scope & Phases
+## MVP Scope & Timeline
 
-### Phase 1: Core Logging (MVP) — Weeks 1-4
-**Goal:** Build Screens 1-6 + basic logging functionality
+### Phase 1: Core Logging (MVP) — Realistic Timeline
+**Goal:** Build Screens 1-7 + basic logging functionality
+
+**Estimated Effort:**
+- Core development: 45-50 hours
+- Buffer for debugging/refinement: +5-10 hours
+- **Total: 50-60 hours**
+- **At 10-15 hrs/week: 3-6 weeks**
 
 **Tasks (in order):**
 1. ✅ System design (this document)
 2. Setup project structure (React + Node backend)
 3. Database setup (Supabase)
-4. User auth (signup/login)
-5. Home screen (date banner + muscle group select)
+4. User auth (signup/login + new profile fields)
+5. Home screen (date banner + muscle group select + past workouts)
 6. Exercise library (seed DB with exercises)
 7. Variations screen
 8. AI feedback integration
 9. Exercise ordering
 10. Exercise logging
 11. Completion screen
-12. Deploy frontend + backend
+12. Error handling & loading states
+13. Testing & bug fixes
+14. Deploy frontend + backend
 
 **Success Criteria:**
-- User can sign up
-- User can select muscle groups and exercises
-- User receives AI feedback
-- User can log a complete workout
-- Data persists in Supabase
+- ✅ User can sign up (with Height, Weight, Experience Level)
+- ✅ User can view past workouts by date
+- ✅ User can select unlimited muscle groups
+- ✅ User can receive AI feedback on exercise selection
+- ✅ User can reorder exercises before logging
+- ✅ User can log a complete workout
+- ✅ Form instructions show for each exercise
+- ✅ Data persists in Supabase
+- ✅ All API calls have loading states & error toasts
+- ✅ App works on mobile
 
 ---
 
@@ -970,23 +1047,48 @@ CREATE POLICY "Users can insert their own workouts"
 
 ---
 
-## Security Considerations
+## Security & Error Handling
 
-### Frontend
+### Error Response Codes (Standard HTTP)
+We use specific HTTP status codes for clarity:
+
+```
+200 OK                    - Successful request
+201 Created               - Resource created (signup, login)
+400 Bad Request           - Malformed request, missing fields
+401 Unauthorized          - Auth token missing or invalid
+409 Conflict              - Email already exists, resource conflict
+422 Unprocessable Entity  - Validation error (e.g., age < 15, invalid weight)
+500 Internal Server Error - Server error (database down, Claude API error)
+```
+
+**Error Response Format (all errors):**
+```json
+{
+  "error": "Email already exists",
+  "code": "DUPLICATE_EMAIL",
+  "status": 409
+}
+```
+
+### Frontend Security
 - Never hardcode API keys in frontend code
 - Use environment variables (loaded at build time)
 - Store JWT token in localStorage (acceptable for MVP; use httpOnly cookies in production)
+- Show error toasts to user (not raw error messages)
 
-### Backend
-- Validate all user inputs
+### Backend Security
+- Validate all user inputs (email format, password length, age range, height/weight bounds)
 - Use JWT for auth (provided by Supabase)
 - Use RLS on database tables (Supabase rows visible only to user)
 - Rate limit API endpoints (Railway supports this)
+- Hash passwords with bcrypt before storing
 
 ### Secrets Management
 - Use `.env` file locally (never commit to Git)
 - Use `.env.example` to document variables
 - On Railway: set secrets in deployment UI
+- Never log sensitive data (passwords, tokens, API keys)
 
 ---
 
