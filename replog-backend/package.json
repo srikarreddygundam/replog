@@ -1,0 +1,29 @@
+{
+  "name": "replog-backend",
+  "version": "1.0.0",
+  "description": "RepLog - AI-powered workout logging app backend",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "fitness",
+    "workout",
+    "ai",
+    "logging"
+  ],
+  "author": "srikarreddygundam",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "pg": "^8.11.1",
+    "axios": "^1.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
